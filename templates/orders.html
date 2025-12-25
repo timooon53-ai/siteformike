@@ -12,11 +12,11 @@
       {% for order in orders %}
         <div class="order-card">
           <div>
-            <h3>Маршрут: {{ order.pickup }} → {{ order.destination }}</h3>
+            <h3>{{ order.city }} · {{ order.pickup }} → {{ order.destination }}</h3>
             <p>{{ order.details or "Без деталей" }}</p>
           </div>
           <div class="order-meta">
-            <span class="status status-{{ order.status }}">{{ order.status }}</span>
+            <span class="status status-{{ order.status }}">{{ status_labels.get(order.status, order.status) }}</span>
             <span>{{ order.created_at }}</span>
           </div>
         </div>

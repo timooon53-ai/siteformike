@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% set title = "Проверить цену" %}
+
+{% block content %}
+<div class="form-container">
+  <h1>Проверить цену поездки</h1>
+  <p class="hint">Цена рассчитывается как в Telegram-боте. Нужен токен Yandex Go.</p>
+  <form method="post" class="form">
+    <label>
+      Город
+      <input type="text" name="city" required>
+    </label>
+    <label>
+      Откуда
+      <input type="text" name="pickup" required>
+    </label>
+    <label>
+      Куда
+      <input type="text" name="destination" required>
+    </label>
+    <label>
+      Тариф
+      <select name="tariff" required>
+        {% for code, label in tariffs %}
+          <option value="{{ code }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button class="button" type="submit">Посчитать цену</button>
+  </form>
+
+  {% if result %}
+    <div class="price-result">
+      <h2>Результат</h2>
+      <p>Тариф: {{ result.tariff_label }}</p>
+      <p>Цена в приложении: ~{{ "%.2f"|format(result.app_price) }} ₽</p>
+      <p class="accent">Наша цена: ~{{ "%.2f"|format(result.our_price) }} ₽</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

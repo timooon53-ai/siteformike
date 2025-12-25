@@ -10,3 +10,6 @@ ADMIN_PASSWORD = "admin123"
 
 # Секрет для сессий Flask
 SECRET_KEY = "замени-на-случайную-строку"
+
+# Токен Yandex Go для проверки цены (нужен для чекера цены).
+YANDEX_TAXI_TOKEN = ""

@@ -3,15 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ title or "Neon Taxi" }}</title>
+  <title>{{ title or "Такси от дяди Майка" }}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <div class="grid"></div>
   <header class="header">
-    <div class="logo">Neon <span>Taxi</span></div>
+    <div class="logo">Такси от <span>дяди Майка</span></div>
     <nav class="nav">
       <a href="{{ url_for('index') }}">Главная</a>
+      <a href="{{ url_for('price_check') }}">Проверить цену</a>
       {% if user %}
         <a href="{{ url_for('orders') }}">Мои заказы</a>
         {% if user.is_admin %}
@@ -39,7 +40,7 @@
   </main>
 
   <footer class="footer">
-    <p>Neon Taxi · Киберпанк-сервис заказов</p>
+    <p>Такси от дяди Майка · Монстры знают толк в скорости</p>
   </footer>
 </body>
 </html>

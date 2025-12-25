@@ -12,17 +12,19 @@
       {% for order in orders %}
         <div class="order-card">
           <div>
-            <h3>{{ order.username }} · {{ order.pickup }} → {{ order.destination }}</h3>
+            <h3>{{ order.username }} · {{ order.city }} · {{ order.pickup }} → {{ order.destination }}</h3>
             <p>{{ order.details or "Без деталей" }}</p>
           </div>
           <div class="order-meta">
-            <span class="status status-{{ order.status }}">{{ order.status }}</span>
+            <span class="status status-{{ order.status }}">{{ status_labels.get(order.status, order.status) }}</span>
             <span>{{ order.created_at }}</span>
-            {% if order.status != 'completed' %}
-              <form method="post" action="{{ url_for('complete_order', order_id=order.id) }}">
-                <button class="button small" type="submit">Выполнен</button>
-              </form>
-            {% endif %}
+            <form method="post" action="{{ url_for('update_order_status', order_id=order.id) }}" class="status-actions">
+              <button class="button small" name="status" value="in_progress" type="submit">Взял в работу</button>
+              <button class="button small" name="status" value="searching" type="submit">Поиск машины</button>
+              <button class="button small" name="status" value="found" type="submit">Нашлась машина</button>
+              <button class="button small" name="status" value="link_sent" type="submit">Отправить ссылку</button>
+              <button class="button small" name="status" value="completed" type="submit">Завершить</button>
+            </form>
           </div>
         </div>
       {% endfor %}
