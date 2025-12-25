@@ -18,12 +18,33 @@
             {% if order.link %}
               <p>Ссылка: <a href="{{ order.link }}" target="_blank">{{ order.link }}</a></p>
             {% endif %}
+            {% if order.total_price %}
+              <p><strong>Сумма оплаты:</strong> {{ "%.2f"|format(order.total_price) }} ₽</p>
+            {% endif %}
             {% if order.payment_details %}
               <div class="payment-details">
                 <strong>Реквизиты:</strong>
                 <pre>{{ order.payment_details }}</pre>
               </div>
             {% endif %}
+            {% if order.paid %}
+              <span class="status status-completed">Оплачено</span>
+            {% endif %}
+            <form method="post" action="{{ url_for('update_order_details', order_id=order.id) }}" class="admin-form">
+              <label>
+                Ссылка на поездку
+                <input type="text" name="link" placeholder="https://..." value="{{ order.link or '' }}">
+              </label>
+              <label>
+                Сумма оплаты
+                <input type="text" name="total_price" placeholder="1500" value="{{ order.total_price or '' }}">
+              </label>
+              <label>
+                Реквизиты для оплаты
+                <textarea name="payment_details" rows="3">{{ order.payment_details or payment_default }}</textarea>
+              </label>
+              <button class="button small" type="submit">Отправить ссылку/цену</button>
+            </form>
           </div>
           <div class="order-meta">
             <span class="status status-{{ order.status }}">{{ status_labels.get(order.status, order.status) }}</span>
@@ -32,7 +53,6 @@
               <button class="button small" name="status" value="in_progress" type="submit">Взял в работу</button>
               <button class="button small" name="status" value="searching" type="submit">Поиск машины</button>
               <button class="button small" name="status" value="found" type="submit">Нашлась машина</button>
-              <button class="button small" name="status" value="link_sent" type="submit">Отправить ссылку</button>
               <button class="button small" name="status" value="completed" type="submit">Завершить</button>
             </form>
           </div>

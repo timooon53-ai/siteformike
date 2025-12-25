@@ -1,5 +1,4 @@
 import hashlib
-import json
 import os
 import re
 import secrets
@@ -92,7 +91,8 @@ def init_db():
             contact_handle TEXT,
             link TEXT,
             payment_details TEXT,
-            link_pending INTEGER NOT NULL DEFAULT 0,
+            total_price REAL,
+            paid INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
             FOREIGN KEY(user_id) REFERENCES users(id)
@@ -109,7 +109,8 @@ def init_db():
             "contact_handle": "TEXT",
             "link": "TEXT",
             "payment_details": "TEXT",
-            "link_pending": "INTEGER NOT NULL DEFAULT 0",
+            "total_price": "REAL",
+            "paid": "INTEGER NOT NULL DEFAULT 0",
         },
     )
     db.commit()
@@ -383,6 +384,7 @@ def admin_orders():
         orders=items,
         user=current_user(),
         status_labels=STATUS_LABELS,
+        payment_default=cfg.PAYMENT_DETAILS,
     )
 
 
@@ -398,31 +400,73 @@ def update_order_status(order_id):
     return redirect(url_for("admin_orders"))
 
 
-@app.route("/telegram/webhook", methods=["POST"])
-def telegram_webhook():
-    update = request.get_json(silent=True) or {}
-    callback = update.get("callback_query")
-    if callback:
-        data = callback.get("data", "")
-        message = callback.get("message", {}) or {}
-        chat_id = message.get("chat", {}).get("id")
-        message_id = message.get("message_id")
-        if data.startswith("order_status:"):
-            _, order_id_str, status = data.split(":", 2)
-            if status in STATUS_LABELS:
-                try:
-                    order_id = int(order_id_str)
-                except ValueError:
-                    order_id = None
-                if order_id is not None:
-                    handle_status_callback(order_id, status, chat_id, message_id)
-            answer_callback(callback.get("id"))
-        return {"ok": True}
+@app.route("/admin/orders/<int:order_id>/update", methods=["POST"])
+@admin_required
+def update_order_details(order_id):
+    link = request.form.get("link", "").strip()
+    total_price = request.form.get("total_price", "").strip()
+    payment_details = request.form.get("payment_details", "").strip()
+    db = get_db()
+    now = datetime.now(timezone.utc).isoformat()
+    price_value = None
+    if total_price:
+        try:
+            price_value = float(total_price.replace(",", "."))
+        except ValueError:
+            flash("Цена должна быть числом.")
+            return redirect(url_for("admin_orders"))
+    status = "link_sent" if link else None
+    db.execute(
+        """
+        UPDATE orders
+        SET link = ?,
+            total_price = ?,
+            payment_details = ?,
+            status = COALESCE(?, status),
+            updated_at = ?
+        WHERE id = ?
+        """,
+        (
+            link or None,
+            price_value,
+            payment_details or cfg.PAYMENT_DETAILS,
+            status,
+            now,
+            order_id,
+        ),
+    )
+    db.commit()
+    flash("Данные заказа обновлены.")
+    return redirect(url_for("admin_orders"))
 
-    message = update.get("message")
-    if message:
-        handle_admin_message(message)
-    return {"ok": True}
+
+@app.route("/orders/<int:order_id>/pay", methods=["POST"])
+@login_required
+def mark_paid(order_id):
+    user = current_user()
+    db = get_db()
+    order = db.execute(
+        "SELECT * FROM orders WHERE id = ? AND user_id = ?",
+        (order_id, user["id"]),
+    ).fetchone()
+    if not order:
+        flash("Заказ не найден.")
+        return redirect(url_for("orders"))
+    if not order["total_price"]:
+        flash("Сумма оплаты ещё не задана.")
+        return redirect(url_for("orders"))
+    if order["paid"]:
+        flash("Оплата уже отмечена.")
+        return redirect(url_for("orders"))
+    now = datetime.now(timezone.utc).isoformat()
+    db.execute(
+        "UPDATE orders SET paid = 1, updated_at = ? WHERE id = ?",
+        (now, order_id),
+    )
+    db.commit()
+    notify_payment(user["username"], order_id, order["total_price"])
+    flash("Спасибо! Оплата отмечена и отправлена администратору.")
+    return redirect(url_for("orders"))
 
 
 def set_order_status(order_id: int, status: str) -> None:
@@ -462,178 +506,37 @@ def send_telegram_order(
         f"Куда: {destination}\n"
         f"Тариф: {tariff_text}\n"
         f"Контакт: {contact_text}\n"
-        f"Детали: {details or 'нет'}\n\n"
-        "Обновите статус кнопками ниже."
+        f"Детали: {details or 'нет'}"
     )
-    keyboard = {
-        "inline_keyboard": [
-            [
-                {"text": "Взял в работу", "callback_data": f"order_status:{order_id}:in_progress"},
-                {"text": "Поиск машины", "callback_data": f"order_status:{order_id}:searching"},
-            ],
-            [
-                {"text": "Нашлась машина", "callback_data": f"order_status:{order_id}:found"},
-                {"text": "Отправить ссылку", "callback_data": f"order_status:{order_id}:link_sent"},
-            ],
-            [
-                {"text": "Отправить реквизиты", "callback_data": f"order_status:{order_id}:payment_sent"},
-            ],
-            [
-                {"text": "Завершить", "callback_data": f"order_status:{order_id}:completed"},
-            ],
-        ]
-    }
     url = f"https://api.telegram.org/bot{cfg.BOT_TOKEN}/sendMessage"
     requests.post(
         url,
         data={
             "chat_id": cfg.ADMIN_TELEGRAM_ID,
             "text": text,
-            "reply_markup": json.dumps(keyboard),
         },
         timeout=10,
     )
 
 
-def answer_callback(callback_id: str | None) -> None:
-    if not callback_id:
+def notify_payment(username: str, order_id: int, total_price: float) -> None:
+    if not cfg.BOT_TOKEN or not cfg.ADMIN_TELEGRAM_ID:
         return
-    url = f"https://api.telegram.org/bot{cfg.BOT_TOKEN}/answerCallbackQuery"
-    requests.post(url, data={"callback_query_id": callback_id}, timeout=10)
-
-
-def update_admin_message(chat_id: int, message_id: int, order_id: int, status: str) -> None:
-    status_label = STATUS_LABELS.get(status, status)
-    text = f"Статус заказа №{order_id} обновлен: {status_label} ✅"
-    url = f"https://api.telegram.org/bot{cfg.BOT_TOKEN}/sendMessage"
-    requests.post(
-        url,
-        data={"chat_id": chat_id, "text": text, "reply_to_message_id": message_id},
-        timeout=10,
+    text = (
+        "Оплата подтверждена на сайте!\n"
+        f"Заказ №{order_id}\n"
+        f"Клиент: {username}\n"
+        f"Сумма: {total_price:.2f} ₽"
     )
-
-
-def handle_status_callback(
-    order_id: int,
-    status: str,
-    chat_id: int | None,
-    message_id: int | None,
-) -> None:
-    if status == "link_sent":
-        mark_link_pending(order_id)
-        if chat_id:
-            prompt_for_link(chat_id, order_id)
-        return
-    if status == "payment_sent":
-        set_payment_details(order_id, cfg.PAYMENT_DETAILS)
-        set_order_status(order_id, status)
-        if chat_id:
-            send_payment_notice(chat_id, order_id)
-        return
-    set_order_status(order_id, status)
-    if chat_id and message_id:
-        update_admin_message(chat_id, message_id, order_id, status)
-
-
-def handle_admin_message(message: dict) -> None:
-    text = message.get("text", "").strip()
-    if not text:
-        return
-    reply_to = message.get("reply_to_message") or {}
-    reply_text = reply_to.get("text", "")
-    match = re.search(r"Заказ №(\\d+)", reply_text)
-    if not match:
-        return
-    order_id = int(match.group(1))
-    if not is_link_pending(order_id):
-        return
-    link = extract_link(text) or text
-    set_order_link(order_id, link)
-    set_order_status(order_id, "link_sent")
-    chat_id = message.get("chat", {}).get("id")
-    if chat_id:
-        send_link_notice(chat_id, order_id, link)
-
-
-def is_link_pending(order_id: int) -> bool:
-    db = get_db()
-    row = db.execute(
-        "SELECT link_pending FROM orders WHERE id = ?",
-        (order_id,),
-    ).fetchone()
-    return bool(row and row["link_pending"])
-
-
-def mark_link_pending(order_id: int) -> None:
-    db = get_db()
-    db.execute(
-        "UPDATE orders SET link_pending = 1 WHERE id = ?",
-        (order_id,),
-    )
-    db.commit()
-
-
-def set_order_link(order_id: int, link: str) -> None:
-    db = get_db()
-    now = datetime.now(timezone.utc).isoformat()
-    db.execute(
-        "UPDATE orders SET link = ?, link_pending = 0, updated_at = ? WHERE id = ?",
-        (link, now, order_id),
-    )
-    db.commit()
-
-
-def set_payment_details(order_id: int, details: str) -> None:
-    if not details:
-        return
-    db = get_db()
-    now = datetime.now(timezone.utc).isoformat()
-    db.execute(
-        "UPDATE orders SET payment_details = ?, updated_at = ? WHERE id = ?",
-        (details, now, order_id),
-    )
-    db.commit()
-
-
-def prompt_for_link(chat_id: int, order_id: int) -> None:
     url = f"https://api.telegram.org/bot{cfg.BOT_TOKEN}/sendMessage"
     requests.post(
         url,
         data={
-            "chat_id": chat_id,
-            "text": f"Отправьте ссылку для заказа №{order_id} ответом на это сообщение.",
+            "chat_id": cfg.ADMIN_TELEGRAM_ID,
+            "text": text,
         },
         timeout=10,
     )
-
-
-def send_payment_notice(chat_id: int, order_id: int) -> None:
-    url = f"https://api.telegram.org/bot{cfg.BOT_TOKEN}/sendMessage"
-    requests.post(
-        url,
-        data={
-            "chat_id": chat_id,
-            "text": f"Реквизиты для заказа №{order_id} отправлены на сайт.",
-        },
-        timeout=10,
-    )
-
-
-def send_link_notice(chat_id: int, order_id: int, link: str) -> None:
-    url = f"https://api.telegram.org/bot{cfg.BOT_TOKEN}/sendMessage"
-    requests.post(
-        url,
-        data={
-            "chat_id": chat_id,
-            "text": f"Ссылка для заказа №{order_id} сохранена: {link}",
-        },
-        timeout=10,
-    )
-
-
-def extract_link(text: str) -> str | None:
-    match = re.search(r"https?://\\S+", text)
-    return match.group(0) if match else None
 
 
 def get_tariff_label(code: str | None) -> str:

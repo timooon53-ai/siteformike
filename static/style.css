@@ -303,6 +303,29 @@ body {
   gap: 6px;
 }
 
+.admin-form {
+  margin-top: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.admin-form label {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.admin-form input,
+.admin-form textarea {
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 2px solid rgba(123, 214, 255, 0.2);
+  background: rgba(9, 25, 46, 0.9);
+  color: var(--text);
+  font-family: inherit;
+}
+
 .status {
   padding: 6px 12px;
   border-radius: 999px;

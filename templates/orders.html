@@ -17,11 +17,23 @@
             {% if order.link %}
               <p>Ссылка: <a href="{{ order.link }}" target="_blank">{{ order.link }}</a></p>
             {% endif %}
-            {% if order.payment_details %}
-              <div class="payment-details">
-                <strong>Реквизиты для оплаты:</strong>
-                <pre>{{ order.payment_details }}</pre>
-              </div>
+            {% if order.total_price %}
+              <p><strong>Сумма оплаты:</strong> {{ "%.2f"|format(order.total_price) }} ₽</p>
+            {% endif %}
+            {% if order.total_price %}
+              {% if order.payment_details %}
+                <div class="payment-details">
+                  <strong>Реквизиты для оплаты:</strong>
+                  <pre>{{ order.payment_details }}</pre>
+                </div>
+              {% endif %}
+              {% if order.paid %}
+                <span class="status status-completed">Оплачено</span>
+              {% else %}
+                <form method="post" action="{{ url_for('mark_paid', order_id=order.id) }}">
+                  <button class="button small" type="submit">Оплатил</button>
+                </form>
+              {% endif %}
             {% endif %}
           </div>
           <div class="order-meta">
