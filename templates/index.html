@@ -5,7 +5,13 @@
 <section class="hero">
   <div class="hero-text">
     <h1>Такси от дяди Майка</h1>
-    <p>Тёплая атмосфера, дружелюбные монстры и полный контроль над поездкой.</p>
+    <p class="rotating-text" data-rotating="Мы готовы принять заказ в любой момент.|Мы на связи 24/7 — оформим поездку мгновенно.|Сервис открыт всегда — заказывай такси в любое время.|Готовы принять заявку прямо сейчас, без ожиданий.">
+      Мы готовы принять заказ в любой момент.
+    </p>
+    <div class="online-status">
+      <span class="online-dot" aria-hidden="true"></span>
+      <span>Мы онлайн</span>
+    </div>
     <div class="hero-actions">
       {% if user %}
         <a class="button" href="{{ url_for('new_order') }}">Сделать заказ</a>
@@ -19,9 +25,9 @@
     <div class="card-glow">
       <h2>Майк уже в пути</h2>
       <ul>
-        <li>Город обязателен — чтобы не потеряться</li>
-        <li>Статус заказа обновляется на сайте</li>
-        <li>Админ получает кнопки статусов в Telegram</li>
+        <li>Укажи свой @username в профиле — так быстрее связаться</li>
+        <li>Мы всегда на связи и готовы помочь</li>
+        <li>Заполняй детали — мы всё учтём</li>
       </ul>
     </div>
   </div>
@@ -48,4 +54,20 @@
     </div>
   </div>
 </section>
+
+<script>
+  const rotating = document.querySelector(".rotating-text");
+  if (rotating) {
+    const variants = rotating.dataset.rotating.split("|");
+    let index = 0;
+    setInterval(() => {
+      index = (index + 1) % variants.length;
+      rotating.classList.add("fade-out");
+      setTimeout(() => {
+        rotating.textContent = variants[index];
+        rotating.classList.remove("fade-out");
+      }, 300);
+    }, 5000);
+  }
+</script>
 {% endblock %}
