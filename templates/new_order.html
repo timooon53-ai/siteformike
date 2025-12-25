@@ -4,6 +4,9 @@
 {% block content %}
 <div class="form-container">
   <h1>Новый заказ</h1>
+  <div class="notice">
+    Внимание! оплатите поездку в течении 3 минут после посадки в машину, в ином случае заказ отменится.
+  </div>
   <form method="post" class="form">
     <label>
       Город
@@ -29,6 +32,10 @@
         <option value="ultimate">Премьер</option>
         <option value="maybach">Элит</option>
       </select>
+    </label>
+    <label>
+      Контакт для связи (например, @tguser)
+      <input type="text" name="contact_handle" placeholder="@tguser">
     </label>
     <label>
       Детали (необязательно)

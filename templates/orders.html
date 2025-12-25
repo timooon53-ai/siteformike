@@ -14,6 +14,15 @@
           <div>
             <h3>{{ order.city }} · {{ order.pickup }} → {{ order.destination }}</h3>
             <p>{{ order.details or "Без деталей" }}</p>
+            {% if order.link %}
+              <p>Ссылка: <a href="{{ order.link }}" target="_blank">{{ order.link }}</a></p>
+            {% endif %}
+            {% if order.payment_details %}
+              <div class="payment-details">
+                <strong>Реквизиты для оплаты:</strong>
+                <pre>{{ order.payment_details }}</pre>
+              </div>
+            {% endif %}
           </div>
           <div class="order-meta">
             <span class="status status-{{ order.status }}">{{ status_labels.get(order.status, order.status) }}</span>

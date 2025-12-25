@@ -40,6 +40,7 @@ STATUS_LABELS = {
     "searching": "Поиск машины",
     "found": "Машина найдена",
     "link_sent": "Ссылка отправлена",
+    "payment_sent": "Реквизиты отправлены",
     "completed": "Завершен",
 }
 
@@ -88,6 +89,10 @@ def init_db():
             tariff TEXT,
             price_app REAL,
             price_our REAL,
+            contact_handle TEXT,
+            link TEXT,
+            payment_details TEXT,
+            link_pending INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
             FOREIGN KEY(user_id) REFERENCES users(id)
@@ -101,6 +106,10 @@ def init_db():
             "tariff": "TEXT",
             "price_app": "REAL",
             "price_our": "REAL",
+            "contact_handle": "TEXT",
+            "link": "TEXT",
+            "payment_details": "TEXT",
+            "link_pending": "INTEGER NOT NULL DEFAULT 0",
         },
     )
     db.commit()
@@ -279,6 +288,7 @@ def new_order():
         destination = request.form.get("destination", "").strip()
         details = request.form.get("details", "").strip()
         tariff = request.form.get("tariff", "").strip()
+        contact_handle = request.form.get("contact_handle", "").strip()
         if not city or not pickup or not destination:
             flash("Укажите город, откуда и куда едет такси.")
             return render_template("new_order.html", user=user)
@@ -287,11 +297,21 @@ def new_order():
         cursor = db.execute(
             """
             INSERT INTO orders (
-                user_id, city, pickup, destination, details, status, tariff, created_at, updated_at
+                user_id, city, pickup, destination, details, status, tariff, contact_handle, created_at, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, 'new', ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, 'new', ?, ?, ?, ?)
             """,
-            (user["id"], city, pickup, destination, details, tariff or None, now, now),
+            (
+                user["id"],
+                city,
+                pickup,
+                destination,
+                details,
+                tariff or None,
+                contact_handle or None,
+                now,
+                now,
+            ),
         )
         db.commit()
         send_telegram_order(
@@ -302,6 +322,7 @@ def new_order():
             destination=destination,
             details=details,
             tariff=tariff,
+            contact_handle=contact_handle,
         )
         flash("Заказ создан! Админ получил уведомление в Telegram.")
         return redirect(url_for("orders"))
@@ -381,27 +402,26 @@ def update_order_status(order_id):
 def telegram_webhook():
     update = request.get_json(silent=True) or {}
     callback = update.get("callback_query")
-    if not callback:
+    if callback:
+        data = callback.get("data", "")
+        message = callback.get("message", {}) or {}
+        chat_id = message.get("chat", {}).get("id")
+        message_id = message.get("message_id")
+        if data.startswith("order_status:"):
+            _, order_id_str, status = data.split(":", 2)
+            if status in STATUS_LABELS:
+                try:
+                    order_id = int(order_id_str)
+                except ValueError:
+                    order_id = None
+                if order_id is not None:
+                    handle_status_callback(order_id, status, chat_id, message_id)
+            answer_callback(callback.get("id"))
         return {"ok": True}
-    data = callback.get("data", "")
-    message = callback.get("message", {}) or {}
-    chat_id = message.get("chat", {}).get("id")
-    message_id = message.get("message_id")
-    if data.startswith("order_status:"):
-        _, order_id_str, status = data.split(":", 2)
-        if status in STATUS_LABELS:
-            try:
-                set_order_status(int(order_id_str), status)
-                answer_callback(callback.get("id"))
-                if chat_id and message_id:
-                    update_admin_message(
-                        chat_id,
-                        message_id,
-                        int(order_id_str),
-                        status,
-                    )
-            except ValueError:
-                pass
+
+    message = update.get("message")
+    if message:
+        handle_admin_message(message)
     return {"ok": True}
 
 
@@ -427,10 +447,12 @@ def send_telegram_order(
     destination: str,
     details: str,
     tariff: str | None,
+    contact_handle: str | None,
 ):
     if not cfg.BOT_TOKEN or not cfg.ADMIN_TELEGRAM_ID:
         return
     tariff_text = tariff or "не указан"
+    contact_text = contact_handle or "не указан"
     text = (
         "Новый заказ с сайта!\n"
         f"Заказ №{order_id}\n"
@@ -439,6 +461,7 @@ def send_telegram_order(
         f"Откуда: {pickup}\n"
         f"Куда: {destination}\n"
         f"Тариф: {tariff_text}\n"
+        f"Контакт: {contact_text}\n"
         f"Детали: {details or 'нет'}\n\n"
         "Обновите статус кнопками ниже."
     )
@@ -451,6 +474,9 @@ def send_telegram_order(
             [
                 {"text": "Нашлась машина", "callback_data": f"order_status:{order_id}:found"},
                 {"text": "Отправить ссылку", "callback_data": f"order_status:{order_id}:link_sent"},
+            ],
+            [
+                {"text": "Отправить реквизиты", "callback_data": f"order_status:{order_id}:payment_sent"},
             ],
             [
                 {"text": "Завершить", "callback_data": f"order_status:{order_id}:completed"},
@@ -485,6 +511,129 @@ def update_admin_message(chat_id: int, message_id: int, order_id: int, status: s
         data={"chat_id": chat_id, "text": text, "reply_to_message_id": message_id},
         timeout=10,
     )
+
+
+def handle_status_callback(
+    order_id: int,
+    status: str,
+    chat_id: int | None,
+    message_id: int | None,
+) -> None:
+    if status == "link_sent":
+        mark_link_pending(order_id)
+        if chat_id:
+            prompt_for_link(chat_id, order_id)
+        return
+    if status == "payment_sent":
+        set_payment_details(order_id, cfg.PAYMENT_DETAILS)
+        set_order_status(order_id, status)
+        if chat_id:
+            send_payment_notice(chat_id, order_id)
+        return
+    set_order_status(order_id, status)
+    if chat_id and message_id:
+        update_admin_message(chat_id, message_id, order_id, status)
+
+
+def handle_admin_message(message: dict) -> None:
+    text = message.get("text", "").strip()
+    if not text:
+        return
+    reply_to = message.get("reply_to_message") or {}
+    reply_text = reply_to.get("text", "")
+    match = re.search(r"Заказ №(\\d+)", reply_text)
+    if not match:
+        return
+    order_id = int(match.group(1))
+    if not is_link_pending(order_id):
+        return
+    link = extract_link(text) or text
+    set_order_link(order_id, link)
+    set_order_status(order_id, "link_sent")
+    chat_id = message.get("chat", {}).get("id")
+    if chat_id:
+        send_link_notice(chat_id, order_id, link)
+
+
+def is_link_pending(order_id: int) -> bool:
+    db = get_db()
+    row = db.execute(
+        "SELECT link_pending FROM orders WHERE id = ?",
+        (order_id,),
+    ).fetchone()
+    return bool(row and row["link_pending"])
+
+
+def mark_link_pending(order_id: int) -> None:
+    db = get_db()
+    db.execute(
+        "UPDATE orders SET link_pending = 1 WHERE id = ?",
+        (order_id,),
+    )
+    db.commit()
+
+
+def set_order_link(order_id: int, link: str) -> None:
+    db = get_db()
+    now = datetime.now(timezone.utc).isoformat()
+    db.execute(
+        "UPDATE orders SET link = ?, link_pending = 0, updated_at = ? WHERE id = ?",
+        (link, now, order_id),
+    )
+    db.commit()
+
+
+def set_payment_details(order_id: int, details: str) -> None:
+    if not details:
+        return
+    db = get_db()
+    now = datetime.now(timezone.utc).isoformat()
+    db.execute(
+        "UPDATE orders SET payment_details = ?, updated_at = ? WHERE id = ?",
+        (details, now, order_id),
+    )
+    db.commit()
+
+
+def prompt_for_link(chat_id: int, order_id: int) -> None:
+    url = f"https://api.telegram.org/bot{cfg.BOT_TOKEN}/sendMessage"
+    requests.post(
+        url,
+        data={
+            "chat_id": chat_id,
+            "text": f"Отправьте ссылку для заказа №{order_id} ответом на это сообщение.",
+        },
+        timeout=10,
+    )
+
+
+def send_payment_notice(chat_id: int, order_id: int) -> None:
+    url = f"https://api.telegram.org/bot{cfg.BOT_TOKEN}/sendMessage"
+    requests.post(
+        url,
+        data={
+            "chat_id": chat_id,
+            "text": f"Реквизиты для заказа №{order_id} отправлены на сайт.",
+        },
+        timeout=10,
+    )
+
+
+def send_link_notice(chat_id: int, order_id: int, link: str) -> None:
+    url = f"https://api.telegram.org/bot{cfg.BOT_TOKEN}/sendMessage"
+    requests.post(
+        url,
+        data={
+            "chat_id": chat_id,
+            "text": f"Ссылка для заказа №{order_id} сохранена: {link}",
+        },
+        timeout=10,
+    )
+
+
+def extract_link(text: str) -> str | None:
+    match = re.search(r"https?://\\S+", text)
+    return match.group(0) if match else None
 
 
 def get_tariff_label(code: str | None) -> str:
