@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% set title = "Регистрация" %}
+
+{% block content %}
+<div class="form-container">
+  <h1>Регистрация</h1>
+  <p class="hint">Восстановить пароль невозможно.</p>
+  <form method="post" class="form">
+    <label>
+      Логин
+      <input type="text" name="username" required>
+    </label>
+    <label>
+      Пароль
+      <input type="password" name="password" required>
+    </label>
+    <button class="button" type="submit">Создать аккаунт</button>
+  </form>
+</div>
+{% endblock %}

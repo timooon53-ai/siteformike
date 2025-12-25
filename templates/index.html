@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% set title = "Neon Taxi" %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-text">
+    <h1>Киберпанк-заказы такси</h1>
+    <p>Скорость, неон и контроль. Оставляй заявку — админ получит её в Telegram.</p>
+    {% if user %}
+      <a class="button" href="{{ url_for('new_order') }}">Создать заказ</a>
+    {% else %}
+      <a class="button" href="{{ url_for('register') }}">Начать</a>
+    {% endif %}
+  </div>
+  <div class="hero-card">
+    <div class="card-glow">
+      <h2>Статусы в реальном времени</h2>
+      <ul>
+        <li>Новый заказ → уведомление админу</li>
+        <li>Админ подтверждает → статус обновляется</li>
+        <li>Всё прозрачно — никакой магии</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="info">
+  <div>
+    <h3>Заказы без лишнего шума</h3>
+    <p>Указывай маршрут, детали и следи за статусом в личном кабинете.</p>
+  </div>
+  <div>
+    <h3>Без восстановления пароля</h3>
+    <p>Пароль восстановить невозможно — сохраняй его надёжно.</p>
+  </div>
+  <div>
+    <h3>Telegram-оповещение</h3>
+    <p>Админ получает новые заявки напрямую в Telegram.</p>
+  </div>
+</section>
+{% endblock %}

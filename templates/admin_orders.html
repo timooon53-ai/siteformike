@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% set title = "Админка" %}
+
+{% block content %}
+<section class="panel">
+  <div class="panel-header">
+    <h1>Админка</h1>
+    <p>Управление заказами</p>
+  </div>
+  <div class="orders">
+    {% if orders %}
+      {% for order in orders %}
+        <div class="order-card">
+          <div>
+            <h3>{{ order.username }} · {{ order.pickup }} → {{ order.destination }}</h3>
+            <p>{{ order.details or "Без деталей" }}</p>
+          </div>
+          <div class="order-meta">
+            <span class="status status-{{ order.status }}">{{ order.status }}</span>
+            <span>{{ order.created_at }}</span>
+            {% if order.status != 'completed' %}
+              <form method="post" action="{{ url_for('complete_order', order_id=order.id) }}">
+                <button class="button small" type="submit">Выполнен</button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p>Пока заказов нет.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title or "Neon Taxi" }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="grid"></div>
+  <header class="header">
+    <div class="logo">Neon <span>Taxi</span></div>
+    <nav class="nav">
+      <a href="{{ url_for('index') }}">Главная</a>
+      {% if user %}
+        <a href="{{ url_for('orders') }}">Мои заказы</a>
+        {% if user.is_admin %}
+          <a href="{{ url_for('admin_orders') }}">Админка</a>
+        {% endif %}
+        <a href="{{ url_for('logout') }}">Выйти</a>
+      {% else %}
+        <a href="{{ url_for('login') }}">Вход</a>
+        <a href="{{ url_for('register') }}">Регистрация</a>
+      {% endif %}
+    </nav>
+  </header>
+
+  <main class="main">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash">
+          {% for message in messages %}
+            <div class="flash-item">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <p>Neon Taxi · Киберпанк-сервис заказов</p>
+  </footer>
+</body>
+</html>
