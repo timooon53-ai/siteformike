@@ -1,15 +1,16 @@
-@import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Baloo+2:wght@500;700&family=Comfortaa:wght@500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Baloo+2:wght@500;700&display=swap");
 
 :root {
-  --bg: #0b233f;
-  --panel: rgba(18, 50, 82, 0.9);
-  --accent: #41f28b;
-  --accent-dark: #2bd977;
-  --accent-secondary: #7bd6ff;
-  --text: #f6fbff;
-  --muted: #c5d8ef;
-  --warning: #ffd36a;
-  --success: #48ff9a;
+  --bg: #061833;
+  --panel: rgba(16, 42, 74, 0.92);
+  --accent: #37f5c9;
+  --accent-dark: #20cfa7;
+  --accent-secondary: #ffc857;
+  --text: #f7fbff;
+  --muted: #c9d8f0;
+  --warning: #ffd166;
+  --success: #67f5a5;
+  --pink: #ff7eb6;
 }
 
 * {
@@ -19,8 +20,8 @@
 }
 
 body {
-  font-family: "Fredoka", sans-serif;
-  background: radial-gradient(circle at top, #1d4570 0%, #0b233f 55%, #071528 100%);
+  font-family: "Nunito", sans-serif;
+  background: radial-gradient(circle at top, #1f4b7a 0%, #0b2445 50%, #061833 100%);
   color: var(--text);
   min-height: 100vh;
   position: relative;
@@ -31,8 +32,8 @@ body {
 .grid {
   position: fixed;
   inset: 0;
-  background-image: radial-gradient(rgba(65, 242, 139, 0.12) 1px, transparent 1px),
-    radial-gradient(rgba(123, 214, 255, 0.08) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(55, 245, 201, 0.12) 1px, transparent 1px),
+    radial-gradient(rgba(255, 200, 87, 0.1) 1px, transparent 1px);
   background-size: 120px 120px;
   background-position: 0 0, 60px 60px;
   pointer-events: none;
@@ -57,6 +58,13 @@ body {
   letter-spacing: 1px;
   color: var(--accent-secondary);
   text-shadow: 0 0 12px rgba(123, 214, 255, 0.4);
+  text-decoration: none;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.logo:hover {
+  transform: translateY(-2px);
+  color: var(--accent);
 }
 
 .logo span {
@@ -317,6 +325,13 @@ body {
   color: var(--muted);
 }
 
+.link-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
 .payment-details {
   margin-top: 10px;
   background: rgba(9, 25, 46, 0.9);
@@ -450,10 +465,13 @@ a:hover {
   .header {
     flex-direction: column;
     gap: 16px;
+    text-align: center;
   }
 
   .nav a {
     margin-left: 12px;
+    margin-right: 12px;
+    display: inline-block;
   }
 
   .order-card {
@@ -464,5 +482,26 @@ a:hover {
 
   .order-meta {
     align-items: flex-start;
+  }
+
+  .hero-text h1 {
+    font-size: 34px;
+  }
+
+  .hero {
+    gap: 20px;
+  }
+
+  .button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .hero-actions {
+    width: 100%;
+  }
+
+  .form-container {
+    padding: 24px;
   }
 }

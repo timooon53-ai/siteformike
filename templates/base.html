@@ -9,7 +9,7 @@
 <body>
   <div class="grid"></div>
   <header class="header">
-    <div class="logo">Такси от <span>дяди Майка</span></div>
+    <a class="logo" href="{{ url_for('index') }}">Такси от <span>дяди Майка</span></a>
     <nav class="nav">
       <a href="{{ url_for('index') }}">Главная</a>
       <a href="{{ url_for('price_check') }}">Проверить цену</a>
