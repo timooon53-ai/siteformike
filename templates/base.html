@@ -14,6 +14,7 @@
       <a href="{{ url_for('index') }}">Главная</a>
       <a href="{{ url_for('price_check') }}">Проверить цену</a>
       {% if user %}
+        <a href="{{ url_for('profile') }}">Профиль</a>
         <a href="{{ url_for('orders') }}">Мои заказы</a>
         {% if user.is_admin %}
           <a href="{{ url_for('admin_orders') }}">Админка</a>

@@ -35,7 +35,7 @@
     </label>
     <label>
       Контакт для связи (например, @tguser)
-      <input type="text" name="contact_handle" placeholder="@tguser">
+      <input type="text" name="contact_handle" placeholder="@tguser" value="{{ user.telegram_handle or '' }}">
     </label>
     <label>
       Детали (необязательно)

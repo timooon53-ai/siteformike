@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Baloo+2:wght@500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Baloo+2:wght@500;700&family=Comfortaa:wght@500;700&display=swap");
 
 :root {
   --bg: #0b233f;
@@ -25,6 +25,7 @@ body {
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
+  animation: fadeIn 0.8s ease;
 }
 
 .grid {
@@ -47,6 +48,7 @@ body {
   padding: 24px 8%;
   background: rgba(7, 21, 40, 0.9);
   border-bottom: 2px solid rgba(65, 242, 139, 0.2);
+  backdrop-filter: blur(12px);
 }
 
 .logo {
@@ -54,6 +56,7 @@ body {
   font-size: 26px;
   letter-spacing: 1px;
   color: var(--accent-secondary);
+  text-shadow: 0 0 12px rgba(123, 214, 255, 0.4);
 }
 
 .logo span {
@@ -70,6 +73,7 @@ body {
 
 .nav a:hover {
   color: var(--accent);
+  text-shadow: 0 0 8px rgba(65, 242, 139, 0.5);
 }
 
 .main {
@@ -90,6 +94,7 @@ body {
   font-family: "Baloo 2", cursive;
   font-size: 44px;
   margin-bottom: 16px;
+  text-shadow: 0 6px 18px rgba(7, 21, 40, 0.5);
 }
 
 .hero-text p {
@@ -111,6 +116,7 @@ body {
   padding: 24px;
   border-radius: 18px;
   box-shadow: 0 12px 30px rgba(7, 21, 40, 0.4);
+  animation: floatUp 6s ease-in-out infinite;
 }
 
 .card-glow h2 {
@@ -136,6 +142,12 @@ body {
   padding: 20px;
   border-radius: 16px;
   border: 2px solid rgba(65, 242, 139, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.info div:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(7, 21, 40, 0.35);
 }
 
 .info h3 {
@@ -165,6 +177,12 @@ body {
   background: transparent;
   color: var(--text);
   border: 2px solid rgba(123, 214, 255, 0.4);
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.button.ghost:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .button.small {
@@ -179,6 +197,7 @@ body {
   padding: 32px;
   border-radius: 20px;
   border: 2px solid rgba(65, 242, 139, 0.2);
+  animation: slideIn 0.6s ease;
 }
 
 .form-container h1 {
@@ -221,6 +240,15 @@ body {
   background: rgba(9, 25, 46, 0.9);
   color: var(--text);
   font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form input:focus,
+.form textarea:focus,
+.form select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(65, 242, 139, 0.25);
 }
 
 .price-result {
@@ -268,6 +296,12 @@ body {
   padding: 18px;
   border-radius: 16px;
   border: 2px solid rgba(123, 214, 255, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.order-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(7, 21, 40, 0.35);
 }
 
 .order-card h3 {
@@ -370,6 +404,46 @@ body {
   color: var(--muted);
   text-align: center;
   border-top: 2px solid rgba(65, 242, 139, 0.2);
+}
+
+a {
+  color: var(--accent-secondary);
+}
+
+a:hover {
+  color: var(--accent);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes floatUp {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
 }
 
 @media (max-width: 760px) {

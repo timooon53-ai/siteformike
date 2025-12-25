@@ -71,10 +71,12 @@ def init_db():
             username TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             is_admin INTEGER NOT NULL DEFAULT 0,
+            telegram_handle TEXT,
             created_at TEXT NOT NULL
         )
         """
     )
+    ensure_columns("users", {"telegram_handle": "TEXT"})
     db.execute(
         """
         CREATE TABLE IF NOT EXISTS orders (
@@ -309,7 +311,7 @@ def new_order():
                 destination,
                 details,
                 tariff or None,
-                contact_handle or None,
+                contact_handle or user["telegram_handle"] or None,
                 now,
                 now,
             ),
@@ -328,6 +330,23 @@ def new_order():
         flash("Заказ создан! Админ получил уведомление в Telegram.")
         return redirect(url_for("orders"))
     return render_template("new_order.html", user=user)
+
+
+@app.route("/profile", methods=["GET", "POST"])
+@login_required
+def profile():
+    user = current_user()
+    if request.method == "POST":
+        telegram_handle = request.form.get("telegram_handle", "").strip()
+        db = get_db()
+        db.execute(
+            "UPDATE users SET telegram_handle = ? WHERE id = ?",
+            (telegram_handle or None, user["id"]),
+        )
+        db.commit()
+        flash("Telegram-аккаунт обновлён.")
+        return redirect(url_for("profile"))
+    return render_template("profile.html", user=user)
 
 
 @app.route("/price-check", methods=["GET", "POST"])
