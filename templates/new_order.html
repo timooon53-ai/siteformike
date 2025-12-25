@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% set title = "Новый заказ" %}
+
+{% block content %}
+<div class="form-container">
+  <h1>Новый заказ</h1>
+  <div class="notice">
+    Внимание! оплатите поездку в течении 3 минут после посадки в машину, в ином случае заказ отменится.
+  </div>
+  <form method="post" class="form">
+    <label>
+      Город
+      <input type="text" name="city" required>
+    </label>
+    <label>
+      Откуда
+      <input type="text" name="pickup" required>
+    </label>
+    <label>
+      Куда
+      <input type="text" name="destination" required>
+    </label>
+    <label>
+      Тариф
+      <select name="tariff">
+        <option value="">Не выбирать</option>
+        <option value="econom">Эконом</option>
+        <option value="business">Комфорт</option>
+        <option value="comfortplus">Комфорт+</option>
+        <option value="minivan">Минивэн</option>
+        <option value="vip">Бизнес</option>
+        <option value="ultimate">Премьер</option>
+        <option value="maybach">Элит</option>
+      </select>
+    </label>
+    <label>
+      Контакт для связи (например, @tguser)
+      <input type="text" name="contact_handle" placeholder="@tguser" value="{{ user.telegram_handle or '' }}">
+    </label>
+    <label>
+      Детали (необязательно)
+      <textarea name="details" rows="4"></textarea>
+    </label>
+    <button class="button" type="submit">Отправить заказ</button>
+  </form>
+  <p class="hint">Хотите узнать цену? Используйте <a href="{{ url_for('price_check') }}">чекер цены</a>.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% set title = "Мои заказы" %}
+
+{% block content %}
+<section class="panel">
+  <div class="panel-header">
+    <h1>Мои заказы</h1>
+    <a class="button" href="{{ url_for('new_order') }}">Создать заказ</a>
+  </div>
+  <div class="orders">
+    {% if orders %}
+      {% for order in orders %}
+        <div class="order-card">
+          <div>
+            <h3>{{ order.city }} · {{ order.pickup }} → {{ order.destination }}</h3>
+            <p>{{ order.details or "Без деталей" }}</p>
+            {% if order.link %}
+              <p>Ссылка: <a href="{{ order.link }}" target="_blank">{{ order.link }}</a></p>
+            {% endif %}
+            {% if order.total_price %}
+              <p><strong>Сумма оплаты:</strong> {{ "%.2f"|format(order.total_price) }} ₽</p>
+            {% endif %}
+            {% if order.total_price %}
+              {% if order.payment_details %}
+                <div class="payment-details">
+                  <strong>Реквизиты для оплаты:</strong>
+                  <pre>{{ order.payment_details }}</pre>
+                </div>
+              {% endif %}
+              {% if order.paid %}
+                <span class="status status-completed">Оплачено</span>
+              {% else %}
+                <form method="post" action="{{ url_for('mark_paid', order_id=order.id) }}">
+                  <button class="button small" type="submit">Оплатил</button>
+                </form>
+              {% endif %}
+            {% endif %}
+          </div>
+          <div class="order-meta">
+            <span class="status status-{{ order.status }}">{{ status_labels.get(order.status, order.status) }}</span>
+            <span>{{ order.created_at }}</span>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p>Пока нет заказов. Самое время создать первый.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% set title = "Такси от дяди Майка" %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-text">
+    <h1>Такси от дяди Майка</h1>
+    <p class="rotating-text" data-rotating="Мы готовы принять заказ в любой момент.|Мы на связи 24/7 — оформим поездку мгновенно.|Сервис открыт всегда — заказывай такси в любое время.|Готовы принять заявку прямо сейчас, без ожиданий.">
+      Мы готовы принять заказ в любой момент.
+    </p>
+    <div class="online-status">
+      <span class="online-dot" aria-hidden="true"></span>
+      <span>Мы онлайн</span>
+    </div>
+    <div class="hero-actions">
+      {% if user %}
+        <a class="button" href="{{ url_for('new_order') }}">Сделать заказ</a>
+      {% else %}
+        <a class="button" href="{{ url_for('register') }}">Присоединиться</a>
+      {% endif %}
+      <a class="button ghost" href="{{ url_for('price_check') }}">Узнать цену</a>
+    </div>
+  </div>
+  <div class="hero-card">
+    <div class="card-glow">
+      <h2>Майк уже в пути</h2>
+      <ul>
+        <li>Укажи свой @username в профиле — так быстрее связаться</li>
+        <li>Мы всегда на связи и готовы помочь</li>
+        <li>Заполняй детали — мы всё учтём</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="info">
+  <div>
+    <h3>Такси за считанные секунды</h3>
+    <p>Оформляй заявку быстро: город, адреса и детали — всё в одной форме.</p>
+  </div>
+  <div>
+    <h3>50% скидка по России</h3>
+    <p>Мы — единственный сервис заказа такси с экономией 50% по всей России.</p>
+  </div>
+  <div>
+    <h3>Ссылки и поддержка</h3>
+    <p>Удобные кнопки для связи и помощи в Telegram.</p>
+    <div class="link-grid">
+      <a class="button small ghost" href="https://t.me/TaxiOtMaykaBot" target="_blank">Telegram-бот</a>
+      <a class="button small ghost" href="https://t.me/TaxiFromMike" target="_blank">Канал</a>
+      <a class="button small ghost" href="https://t.me/+z_S1iZMVW-ZmMzBi" target="_blank">Чат</a>
+      <a class="button small ghost" href="https://telegra.ph/FAQ-12-19-16" target="_blank">FAQ</a>
+      <a class="button small ghost" href="https://t.me/TakeMaxist" target="_blank">Оператор</a>
+    </div>
+  </div>
+</section>
+
+<script>
+  const rotating = document.querySelector(".rotating-text");
+  if (rotating) {
+    const variants = rotating.dataset.rotating.split("|");
+    let index = 0;
+    setInterval(() => {
+      index = (index + 1) % variants.length;
+      rotating.classList.add("fade-out");
+      setTimeout(() => {
+        rotating.textContent = variants[index];
+        rotating.classList.remove("fade-out");
+      }, 300);
+    }, 5000);
+  }
+</script>
+{% endblock %}

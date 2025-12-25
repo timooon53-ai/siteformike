@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title or "Такси от дяди Майка" }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="grid"></div>
+  <header class="header">
+    <a class="logo" href="{{ url_for('index') }}">Такси от <span>дяди Майка</span></a>
+    <nav class="nav">
+      <a href="{{ url_for('index') }}">Главная</a>
+      <a href="{{ url_for('price_check') }}">Проверить цену</a>
+      {% if user %}
+        <a href="{{ url_for('profile') }}">Профиль</a>
+        <a href="{{ url_for('orders') }}">Мои заказы</a>
+        {% if user.is_admin %}
+          <a href="{{ url_for('admin_orders') }}">Админка</a>
+        {% endif %}
+        <a href="{{ url_for('logout') }}">Выйти</a>
+      {% else %}
+        <a href="{{ url_for('login') }}">Вход</a>
+        <a href="{{ url_for('register') }}">Регистрация</a>
+      {% endif %}
+    </nav>
+  </header>
+
+  <main class="main">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash">
+          {% for message in messages %}
+            <div class="flash-item">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <p>Такси от дяди Майка · Монстры знают толк в скорости</p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% set title = "Профиль" %}
+
+{% block content %}
+<div class="form-container">
+  <h1>Профиль</h1>
+  <p class="hint">Привяжите Telegram-аккаунт, чтобы админ мог связаться напрямую.</p>
+  <form method="post" class="form">
+    <label>
+      Telegram (@username)
+      <input type="text" name="telegram_handle" placeholder="@tguser" value="{{ user.telegram_handle or '' }}">
+    </label>
+    <button class="button" type="submit">Сохранить</button>
+  </form>
+</div>
+{% endblock %}
